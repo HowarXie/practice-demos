@@ -2,9 +2,9 @@ const canvasEle = document.getElementById("canvasView");
 const canvasCtx = canvasEle.getContext("2d");
 
 const startPoint = [20, 100];
-const controllPoints = [[50, 30], [80, 150]];
+const controlPoints = [[50, 30], [80, 150]];
 const endPoint = [100, 120];
-const allPoints = [startPoint, ...controllPoints, endPoint];
+const allPoints = [startPoint, ...controlPoints, endPoint];
 
 drawBeizer(allPoints);
 
