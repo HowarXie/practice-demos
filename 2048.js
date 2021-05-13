@@ -31,33 +31,44 @@ class Chess {
     }
 
     getChessColor(num) {
-        if (num >= 16 && num < 64) {
-            return "#00BCD4";
+        if (num >= 16 && num < 128) {
+            return "#1ce1fa";
         }
 
-        if (num >= 64 && num < 256) {
-            return "#2196F3";
+        if (num >= 128 && num < 512) {
+            return "#299bf6";
         }
 
-        if (num >= 256 && num < 1024) {
-            return "#9C27B0";
+        if (num >= 512 && num < 2048) {
+            return "#3f69fe";
         }
 
-        if (num >= 1024) {
-            return "#e50652";
+        if (num >= 2048) {
+            return "#ff8fe2";
         }
 
-        return "white";
+        return "#98F5FF";
+    }
+
+    clone() {
+        const cloneChess = new Chess();
+        cloneChess.num = this.num;
+        return cloneChess;
     }
 }
 
 class Chessboard {
-    #size = 4;
+    size = 4;
+    #chessList = [];
+    #preChessList = [];
 
     constructor(size) {
-        this.#size = size
+        this.size = size
         this.isFull = false;
+    }
 
+    //public
+    start() {
         this.clearChessInfo();
         this.initChessboard();
         this.generateChess();
@@ -71,19 +82,22 @@ class Chessboard {
     }
 
     initChessboard() {
-        this.chessList = [];
-        for (let i = 0; i < this.#size; i++) {
-            this.chessList.push([]);
+        this.#chessList = [];
+        this.#preChessList = [];
+        for (let i = 0; i < this.size; i++) {
+            this.#chessList.push([]);
+            this.#preChessList.push([]);
 
-            for (let j = 0; j < this.#size; j++) {
-                this.chessList[i][j] = new Chess();
+            for (let j = 0; j < this.size; j++) {
+                this.#chessList[i][j] = new Chess();
+                this.#preChessList[i][j] = new Chess();
             }
         }
     }
 
     generateChess() {
         const [x, y] = this.calcNewChessLoc();;
-        this.chessList[x][y].randomNum();
+        this.#chessList[x][y].randomNum();
         this.chessInfo.generate = [x, y];
     }
 
@@ -96,16 +110,16 @@ class Chessboard {
         let randomIndex = MathUtil.getRandomNum(restPositions.length);
         let newChessPosition = restPositions[randomIndex];
 
-        return [Math.floor(newChessPosition / this.#size), newChessPosition % this.#size];
+        return [Math.floor(newChessPosition / this.size), newChessPosition % this.size];
     }
 
     getRestPositions() {
         let positions = [];
 
-        for (let i = 0; i < this.#size; i++) {
-            for (let j = 0; j < this.#size; j++) {
-                if (!this.hasChess(i, j)) {
-                    positions.push(i * this.#size + j);
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (!this.getChessByLoc(i, j).num) {
+                    positions.push(i * this.size + j);
                 }
             }
         }
@@ -113,11 +127,13 @@ class Chessboard {
         return positions;
     }
 
+    //public
     moveTo(direction) {
         if (this.isFull) return;
 
         let chessMoved = false;
         this.clearChessInfo();
+        this.#preChessList = this.#chessList.map(chesses => chesses.map(chess => chess.clone()));
 
         switch (direction) {
             case Direction.left: chessMoved = this.moveToLeft(); break;
@@ -126,21 +142,23 @@ class Chessboard {
             case Direction.down: chessMoved = this.moveToBottom(); break;
         }
 
-        if (chessMoved)
+        if (chessMoved) {
             this.generateChess();
-        else
+        }
+        else {
             this.validateChessboardIsFull();
+        }
 
     }
 
     moveToLeft() {
         let chessMoved = false;
 
-        for (let i = 0; i < this.#size; i++) {
+        for (let i = 0; i < this.size; i++) {
             let numIndex = 0;
-            for (let j = 1; j < this.#size; j++) {
-                let curChess = this.chessList[i][numIndex];
-                let nextChess = this.chessList[i][j];
+            for (let j = 1; j < this.size; j++) {
+                let curChess = this.#chessList[i][numIndex];
+                let nextChess = this.#chessList[i][j];
 
                 if (curChess.num !== 0 && nextChess.num !== 0) {
                     if (curChess.num === nextChess.num) {
@@ -149,7 +167,7 @@ class Chessboard {
                         chessMoved = true;
                         this.chessInfo.move.set([i, j], [i, numIndex]);
                     } else if (numIndex + 1 !== j) {
-                        this.chessList[i][numIndex + 1].num = nextChess.num;
+                        this.#chessList[i][numIndex + 1].num = nextChess.num;
                         nextChess.num = 0;
                         chessMoved = true;
                         this.chessInfo.move.set([i, j], [i, numIndex + 1]);
@@ -173,11 +191,11 @@ class Chessboard {
     moveToRight() {
         let chessMoved = false;
 
-        for (let i = 0; i < this.#size; i++) {
-            let numIndex = this.#size - 1;
-            for (let j = this.#size - 2; j >= 0; j--) {
-                let curChess = this.chessList[i][numIndex];
-                let nextChess = this.chessList[i][j];
+        for (let i = 0; i < this.size; i++) {
+            let numIndex = this.size - 1;
+            for (let j = this.size - 2; j >= 0; j--) {
+                let curChess = this.#chessList[i][numIndex];
+                let nextChess = this.#chessList[i][j];
 
                 if (curChess.num !== 0 && nextChess.num !== 0) {
                     if (curChess.num === nextChess.num) {
@@ -186,7 +204,7 @@ class Chessboard {
                         chessMoved = true;
                         this.chessInfo.move.set([i, j], [i, numIndex]);
                     } else if (numIndex - 1 !== j) {
-                        this.chessList[i][numIndex - 1].num = nextChess.num;
+                        this.#chessList[i][numIndex - 1].num = nextChess.num;
                         nextChess.num = 0;
                         chessMoved = true;
                         this.chessInfo.move.set([i, j], [i, numIndex - 1]);
@@ -210,23 +228,23 @@ class Chessboard {
     moveToTop() {
         let chessMoved = false;
 
-        for (let i = 0; i < this.#size; i++) {
+        for (let i = 0; i < this.size; i++) {
             let numIndex = 0;
-            for (let j = 1; j < this.#size; j++) {
-                let curChess = this.chessList[numIndex][i];
-                let nextChess = this.chessList[j][i];
+            for (let j = 1; j < this.size; j++) {
+                let curChess = this.#chessList[numIndex][i];
+                let nextChess = this.#chessList[j][i];
 
                 if (curChess.num !== 0 && nextChess.num !== 0) {
                     if (curChess.num === nextChess.num) {
                         curChess.num *= 2;
                         nextChess.num = 0;
                         chessMoved = true;
-                        this.chessInfo.move.set([i, j], [numIndex, i]);
+                        this.chessInfo.move.set([j, i], [numIndex, i]);
                     } else if (numIndex + 1 !== j) {
-                        this.chessList[numIndex + 1][i].num = nextChess.num;
+                        this.#chessList[numIndex + 1][i].num = nextChess.num;
                         nextChess.num = 0;
                         chessMoved = true;
-                        this.chessInfo.move.set([i, j], [numIndex + 1, i]);
+                        this.chessInfo.move.set([j, i], [numIndex + 1, i]);
                     }
                     numIndex++;
                     continue;
@@ -236,7 +254,7 @@ class Chessboard {
                     curChess.num = nextChess.num;
                     nextChess.num = 0;
                     chessMoved = true;
-                    this.chessInfo.move.set([i, j], [numIndex, i]);
+                    this.chessInfo.move.set([j, i], [numIndex, i]);
                 }
             }
         }
@@ -247,23 +265,23 @@ class Chessboard {
     moveToBottom() {
         let chessMoved = false;
 
-        for (let i = 0; i < this.#size; i++) {
-            let numIndex = this.#size - 1;
-            for (let j = this.#size - 2; j >= 0; j--) {
-                let curChess = this.chessList[numIndex][i];
-                let nextChess = this.chessList[j][i];
+        for (let i = 0; i < this.size; i++) {
+            let numIndex = this.size - 1;
+            for (let j = this.size - 2; j >= 0; j--) {
+                let curChess = this.#chessList[numIndex][i];
+                let nextChess = this.#chessList[j][i];
 
                 if (curChess.num !== 0 && nextChess.num !== 0) {
                     if (curChess.num === nextChess.num) {
                         curChess.num *= 2;
                         nextChess.num = 0;
                         chessMoved = true;
-                        this.chessInfo.move.set([i, j], [numIndex, i]);
+                        this.chessInfo.move.set([j, i], [numIndex, i]);
                     } else if (numIndex - 1 !== j) {
-                        this.chessList[numIndex - 1][i].num = nextChess.num;
+                        this.#chessList[numIndex - 1][i].num = nextChess.num;
                         nextChess.num = 0;
                         chessMoved = true;
-                        this.chessInfo.move.set([i, j], [numIndex - 1, i]);
+                        this.chessInfo.move.set([j, i], [numIndex - 1, i]);
                     }
                     numIndex--;
                     continue;
@@ -273,7 +291,7 @@ class Chessboard {
                     curChess.num = nextChess.num;
                     nextChess.num = 0;
                     chessMoved = true;
-                    this.chessInfo.move.set([i, j], [numIndex, i]);
+                    this.chessInfo.move.set([j, i], [numIndex, i]);
                 }
             }
         }
@@ -288,13 +306,13 @@ class Chessboard {
         //without free space
         if (newChessLoc === null) {
             //validate adjacent elements have the same number
-            for (let i = 0; i < this.#size; i++) {
-                for (let j = 0; j < this.#size - 1; j++) {
-                    if (this.chessList[i][j].num === this.chessList[i][j + 1].num) {
+            for (let i = 0; i < this.size; i++) {
+                for (let j = 0; j < this.size - 1; j++) {
+                    if (this.#chessList[i][j].num === this.#chessList[i][j + 1].num) {
                         return;
                     }
 
-                    if (this.chessList[j][i].num === this.chessList[j + 1][i].num) {
+                    if (this.#chessList[j][i].num === this.#chessList[j + 1][i].num) {
                         return;
                     }
                 }
@@ -304,8 +322,13 @@ class Chessboard {
         }
     }
 
-    hasChess(x, y) {
-        return this.chessList[x][y].num !== 0;
+    //public
+    getChessByLoc(x, y) {
+        return this.#chessList[x][y];
+    }
+
+    getOldChessByLoc(x, y) {
+        return this.#preChessList[x][y];
     }
 }
 
