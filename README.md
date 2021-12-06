@@ -1,2 +1,2 @@
 # practice-demos
-write some demo for new technologies
+some demos of canvas
